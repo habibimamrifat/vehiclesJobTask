@@ -1,6 +1,10 @@
-import db from '../../database/knex.js';
-import { CloudinaryService } from '../../helpers/cloudinary.service.js';
-import type { CreateVehicleData, UpdateVehicleData, Vehicle } from './vehicles.types.js'
+import db from "../../database/knex.js";
+import { CloudinaryService } from "../../helpers/cloudinary.service.js";
+import type {
+  CreateVehicleData,
+  UpdateVehicleData,
+  Vehicle,
+} from "./vehicles.types.js";
 
 export class VehicleService {
   private readonly cloudinaryService = new CloudinaryService();
@@ -13,28 +17,32 @@ export class VehicleService {
   ) {
     const offset = (page - 1) * limit;
 
-    const query = db('vehicles')
-      .whereNull('deleted_at')
+    const query = db("vehicles")
+      .whereNull("deleted_at")
       .select(
-        'id',
-        'name',
-        'plate_number',
-        'category',
-        'daily_rate',
-        'photo_path',
-        'created_at',
-        'updated_at',
+        "id",
+        "name",
+        "plate_number",
+        "category",
+        "daily_rate",
+        "photo_path",
+        "created_at",
+        "updated_at",
       );
 
     if (category) {
-      query.where('category', category);
+      query.where("category", category);
     }
 
     if (search) {
-      query.whereILike('name', `%${search}%`);
+      query.whereILike("name", `%${search}%`);
     }
 
-    const countQuery = query.clone().clearSelect().clearOrder().count('* as count');
+    const countQuery = query
+      .clone()
+      .clearSelect()
+      .clearOrder()
+      .count("* as count");
 
     const [vehicles, countResult] = await Promise.all([
       query.limit(limit).offset(offset),
@@ -55,15 +63,29 @@ export class VehicleService {
   }
 
   async getVehicle(id: number) {
-    return db('vehicles')
+    return db("vehicles")
       .where({
         id,
       })
-      .whereNull('deleted_at')
+      .whereNull("deleted_at")
       .first();
   }
 
 async createVehicle(data: CreateVehicleData) {
+  const existingVehicle = await db('vehicles')
+    .where({
+      plate_number: data.plate_number,
+    })
+    .whereNull('deleted_at')
+    .first();
+
+  if (existingVehicle) {
+    return {
+      statusCode: 409,
+      message: 'A vehicle with this plate number already exists',
+    };
+  }
+
   let photoUrl: string | undefined;
 
   if (data.photo_path) {
@@ -92,56 +114,48 @@ async createVehicle(data: CreateVehicleData) {
   return vehicle;
 }
 
-async updateVehicle(
-  id: number,
-  data: UpdateVehicleData,
-) {
-  const existingVehicle = await this.getVehicle(id);
+  async updateVehicle(id: number, data: UpdateVehicleData) {
+    const existingVehicle = await this.getVehicle(id);
 
-  if (!existingVehicle) {
-    return null;
-  }
-
-  let photoUrl = existingVehicle.photo_path;
-
-  if (data.photo_path) {
-    // Upload new image first
-    photoUrl =
-      await this.cloudinaryService.uploadImage(
-        data.photo_path,
-      );
-
-    // Delete old image after successful upload
-    if (existingVehicle.photo_path) {
-      await this.cloudinaryService.deleteImage(
-        existingVehicle.photo_path,
-      );
+    if (!existingVehicle) {
+      return null;
     }
+
+    let photoUrl = existingVehicle.photo_path;
+
+    if (data.photo_path) {
+      // Upload new image first
+      photoUrl = await this.cloudinaryService.uploadImage(data.photo_path);
+
+      // Delete old image after successful upload
+      if (existingVehicle.photo_path) {
+        await this.cloudinaryService.deleteImage(existingVehicle.photo_path);
+      }
+    }
+
+    const [vehicle] = await db("vehicles")
+      .where({
+        id,
+      })
+      .whereNull("deleted_at")
+      .update({
+        ...data,
+        photo_path: photoUrl,
+        updated_at: db.fn.now(),
+      })
+      .returning([
+        "id",
+        "name",
+        "plate_number",
+        "category",
+        "daily_rate",
+        "photo_path",
+        "created_at",
+        "updated_at",
+      ]);
+
+    return vehicle;
   }
-
-  const [vehicle] = await db('vehicles')
-    .where({
-      id,
-    })
-    .whereNull('deleted_at')
-    .update({
-      ...data,
-      photo_path: photoUrl,
-      updated_at: db.fn.now(),
-    })
-    .returning([
-      'id',
-      'name',
-      'plate_number',
-      'category',
-      'daily_rate',
-      'photo_path',
-      'created_at',
-      'updated_at',
-    ]);
-
-  return vehicle;
-}
 
   async deleteVehicle(id: number) {
     const vehicle = await this.getVehicle(id);
@@ -150,13 +164,10 @@ async updateVehicle(
       return null;
     }
 
-    await db('vehicles')
-      .where({ id })
-      .whereNull('deleted_at')
-      .update({
-        deleted_at: db.fn.now(),
-        updated_at: db.fn.now(),
-      });
+    await db("vehicles").where({ id }).whereNull("deleted_at").update({
+      deleted_at: db.fn.now(),
+      updated_at: db.fn.now(),
+    });
 
     return true;
   }

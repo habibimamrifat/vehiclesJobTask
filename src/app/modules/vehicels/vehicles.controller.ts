@@ -59,6 +59,8 @@ export class VehicleController {
       photo_path: req.file?.path,
     });
 
+    console.log("photo path", req.file?.path);
+
     res.status(201).json(vehicle);
   }
 
