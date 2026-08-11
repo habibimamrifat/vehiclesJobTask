@@ -1,0 +1,49 @@
+{
+  "name": "job360ict",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start:dev": "TS_NODE_FILES=true node --trace-warnings --watch --loader ts-node/esm ./src/server.ts",
+    "start:prod": "node ./dist/server.js",
+    "build": "tsc",
+    "pingDatabase": "node --loader ts-node/esm ./src/app/database/test-db.ts",
+    "run:migrations": "npx knex migrate:latest --knexfile knexfile.ts",
+    "status:migrations": "npx knex migrate:status --knexfile knexfile.ts",
+    "run:seed": "npx knex seed:run --knexfile knexfile.ts",
+    "migrate": "knex migrate:latest",
+    "migrate:rollback": "knex migrate:rollback"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "cloudinary": "^2.10.0",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "ioredis": "^6.0.0",
+    "joi": "^18.2.3",
+    "jsonwebtoken": "^9.0.3",
+    "knex": "^3.3.0",
+    "multer": "^2.2.0",
+    "node-fetch": "^3.3.2",
+    "pg": "^8.23.0"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
+    "@types/express": "^5.0.6",
+    "@types/ioredis": "^4.28.10",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/multer": "^2.2.0",
+    "@types/node": "^26.2.0",
+    "@types/pg": "^8.21.0",
+    "eslint": "^10.8.1",
+    "prettier": "^3.9.6",
+    "ts-node": "^10.9.2",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.9.2"
+  }
+}
