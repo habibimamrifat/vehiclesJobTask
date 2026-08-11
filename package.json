@@ -6,13 +6,13 @@
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start:dev": "TS_NODE_FILES=true node --trace-warnings --watch --loader ts-node/esm ./src/server.ts",
-    "start:prod": "node ./dist/server.js",
-    "build": "tsc",
+    "start:dev": "node init && TS_NODE_FILES=true node --trace-warnings --watch --loader ts-node/esm ./src/server.ts",
+    "start:prod": "node init && node ./dist/server.js",
+    "build": "node init && tsc",
     "pingDatabase": "node --loader ts-node/esm ./src/app/database/test-db.ts",
-    "run:migrations": "npx knex migrate:latest --knexfile knexfile.ts",
+    "run:migrations": "node init && npx knex migrate:latest --knexfile knexfile.ts",
     "status:migrations": "npx knex migrate:status --knexfile knexfile.ts",
-    "run:seed": "npx knex seed:run --knexfile knexfile.ts",
+    "run:seed": "node init && npx knex seed:run --knexfile knexfile.ts",
     "migrate": "knex migrate:latest",
     "migrate:rollback": "knex migrate:rollback"
   },
